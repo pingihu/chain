@@ -12,21 +12,26 @@ class MarkovChainWalker:
         self.ctr = 0
 
     def nextWord(self, curr_word):
-        num = random.random()
+        num = random.randint(0,100)
         if self.graph.nodes[curr_word] != []:
-            poss_words = filter(lambda e: e.weight > num, self.graph.nodes[curr_word])
-            if poss_words != []:
-                return random.choice(poss_words).end
-            else:
-                return random.choice(self.graph.nodes[curr_word]).end
-        return ". "
+            total = 0
+            for edge in self.graph.nodes[curr_word]:
+                old_total = total
+                total += edge.weight * 100
+                if old_total <= num and num <= total:
+                    return edge.end
+        return -1
 
     def walk(self, curr_node):
         sys.stdout.write(curr_node + " ")
         next = self.nextWord(curr_node)
-        if next != ". " and self.ctr < self.max_words:
+        if self.ctr < self.max_words:
             self.ctr += 1
-            self.walk(next)
+            if next != -1:
+                self.walk(next)
+            else:
+                source = self.graph.nodes.keys()[random.randint(0,len(self.graph.nodes) - 1)]
+                self.walk(source)
 
     def start(self):
         source = self.graph.nodes.keys()[random.randint(0,len(self.graph.nodes) - 1)]
@@ -49,5 +54,6 @@ def main():
 
     markovWalker = MarkovChainWalker(markovGraph, 100)
     markovWalker.start()
-
+    sys.stdout.write(".")
+    
 main()
