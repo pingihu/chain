@@ -44,7 +44,7 @@ def main():
         text = text.replace(p, " " + p + " ")
     textAsList = text.split()
     markovGraph = graph.Graph(textAsList[0])
-    for i in xrange(0,len(textAsList) - 1):
+    for i in xrange(0, len(textAsList) - 1):
         markovGraph.addNode(textAsList[i], textAsList[i+1])
 
     markovWalker = MarkovChainWalker(markovGraph, 100)
