@@ -2,6 +2,8 @@ import graph
 import random
 import sys
 import string
+from bs4 import BeautifulSoup
+import urllib2
 
 
 class MarkovChainWalker:
@@ -38,20 +40,56 @@ class MarkovChainWalker:
         self.walk(source)
 
 
-def main():
-    num_words = 100
-    if len(sys.argv) == 2:
-        spec = str(raw_input("specify number of wbords? (y/n, default: 100)"))
-        if spec == "y":
-            num_words = int(raw_input("number of words: "))
-    f = open(sys.argv[1], "r")
-    text = f.read()
+def stripPunct(text):
     for p in string.punctuation:
         text = text.replace(p, " " + p + " ")
     textAsList = text.split()
-    markovGraph = graph.Graph(textAsList[0])
-    for i in xrange(0, len(textAsList) - 1):
-        markovGraph.addNode(textAsList[i], textAsList[i+1])
+    for line in textAsList:
+        line = line.strip()
+    return textAsList
+
+
+def main():
+    num_words = 100
+    urls = []
+    files = []
+    parse_file = parse_url = False
+    if len(sys.argv) == 1:
+        print "usage: requires at least one input source"
+        exit(1)
+    elif len(sys.argv) > 1:
+        for input in sys.argv[1:]:
+            if "http" in input:
+                parse_url = True
+                urls += input
+            elif ".txt" in input or ".dat" in input or ".rtf" in input:
+                parse_file = True
+                files += input
+            else:
+                print "usage: invalid text source"
+                exit(1)
+    if parse_file:
+        for file_name in files:
+            f = open(file_name, "r")
+            text = f.read()
+            textAsList = stripPunct(text)
+            markovGraph = graph.Graph(textAsList[0])
+            for i in xrange(0, len(textAsList) - 1):
+                markovGraph.addNode(textAsList[i], textAsList[i+1])
+    if parse_url:
+        for url in urls:
+            readString = ""
+            response = url
+            response = urllib2.urlopen(sys.argv[1])
+            html = response.read()
+            soup = BeautifulSoup(html)
+            for script in soup(["script", "style"]):
+                script.extract()
+            readString = soup.get_text()
+            textAsList = stripPunct(readString)
+            markovGraph = graph.Graph(textAsList[0])
+            for i in xrange(0, len(textAsList) - 1):
+                markovGraph.addNode(textAsList[i], textAsList[i+1])
 
     markovWalker = MarkovChainWalker(markovGraph, num_words)
     markovWalker.start()
